@@ -2,12 +2,14 @@
 """
 Presence analyzer unit tests.
 """
+from __future__ import unicode_literals
+
 import os.path
 import json
 import datetime
 import unittest
 
-from presence_analyzer import main, views, utils
+from presence_analyzer import main, utils
 
 
 TEST_DATA_CSV = os.path.join(
@@ -51,7 +53,52 @@ class PresenceAnalyzerViewsTestCase(unittest.TestCase):
         self.assertEqual(resp.content_type, 'application/json')
         data = json.loads(resp.data)
         self.assertEqual(len(data), 2)
-        self.assertDictEqual(data[0], {u'user_id': 10, u'name': u'User 10'})
+        self.assertDictEqual(data[0], {'user_id': 10, 'name': 'User 10'})
+
+    def test_mean_time_weekday_view(self):
+        """
+        Test mean time weekday view.
+        """
+        resp = self.client.get('/api/v1/mean_time_weekday/0')
+        self.assertEqual(resp.status_code, 404)
+
+        resp = self.client.get('/api/v1/mean_time_weekday/10')
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(
+            json.loads(resp.data),
+            [
+                ['Mon', 0],
+                ['Tue', 30047.0],
+                ['Wed', 24465.0],
+                ['Thu', 23705.0],
+                ['Fri', 0],
+                ['Sat', 0],
+                ['Sun', 0]
+            ]
+        )
+
+    def test_presence_weekday_view(self):
+        """
+        Test presence weekday view.
+        """
+        resp = self.client.get('/api/v1/presence_weekday/0')
+        self.assertEqual(resp.status_code, 404)
+
+        resp = self.client.get('/api/v1/presence_weekday/10')
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(
+            json.loads(resp.data),
+            [
+                ['Weekday', 'Presence (s)'],
+                ['Mon', 0],
+                ['Tue', 30047],
+                ['Wed', 24465],
+                ['Thu', 23705],
+                ['Fri', 0],
+                ['Sat', 0],
+                ['Sun', 0]
+            ]
+        )
 
 
 class PresenceAnalyzerUtilsTestCase(unittest.TestCase):
@@ -85,6 +132,80 @@ class PresenceAnalyzerUtilsTestCase(unittest.TestCase):
             data[10][sample_date]['start'],
             datetime.time(9, 39, 5)
         )
+
+    def test_group_by_weekday(self):
+        """
+        Test groups presence entries by weekday.
+        """
+        self.assertEqual(
+            utils.group_by_weekday(utils.get_data()[10]),
+            [[], [30047], [24465], [23705], [], [], []]
+        )
+
+    def test_seconds_since_midnight(self):
+        """
+        Test calculates amount of seconds since midnight.
+        """
+        self.assertEqual(
+            utils.seconds_since_midnight(
+                datetime.datetime(
+                    year=2014,
+                    month=1,
+                    day=1,
+                    hour=0,
+                    minute=0,
+                    second=1
+                )
+            ),
+            1
+        )
+        self.assertEqual(
+            utils.seconds_since_midnight(
+                datetime.datetime(
+                    year=2014,
+                    month=1,
+                    day=1,
+                    hour=15,
+                    minute=57,
+                    second=44
+                )
+            ),
+            57464
+        )
+
+    def test_interval(self):
+        """
+        Test calculates inverval in seconds between two datetime.time objects.
+        """
+        self.assertEqual(
+            utils.interval(
+                datetime.datetime(
+                    year=2014,
+                    month=1,
+                    day=1,
+                    hour=0,
+                    minute=0,
+                    second=1
+                ),
+                datetime.datetime(
+                    year=2014,
+                    month=1,
+                    day=1,
+                    hour=0,
+                    minute=0,
+                    second=2
+                )
+            ),
+            1
+        )
+
+    def test_mean(self):
+        """
+        Test calculates arithmetic mean.
+        """
+        self.assertEqual(utils.mean([]), 0)
+        self.assertEqual(utils.mean([1, 2]), 1.5)
+        self.assertEqual(utils.mean([1.5, 2.8]), 2.15)
 
 
 def suite():
