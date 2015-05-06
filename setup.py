@@ -27,6 +27,7 @@ setup(
     install_requires=[
         'setuptools',
         'Flask',
+        'pep8',
     ],
     entry_points="""
     """,
