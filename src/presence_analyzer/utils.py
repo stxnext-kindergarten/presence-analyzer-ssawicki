@@ -4,9 +4,9 @@ Helper functions used in views.
 """
 
 import csv
+from datetime import datetime
 from json import dumps
 from functools import wraps
-from datetime import datetime
 
 from flask import Response
 
@@ -76,10 +76,10 @@ def group_by_weekday(items):
     Groups presence entries by weekday.
     """
     result = [[], [], [], [], [], [], []]  # one list for every day in week
-    for date in items:
-        start = items[date]['start']
-        end = items[date]['end']
-        result[date.weekday()].append(interval(start, end))
+    for single_date in items:
+        start = items[single_date]['start']
+        end = items[single_date]['end']
+        result[single_date.weekday()].append(interval(start, end))
     return result
 
 
@@ -102,3 +102,23 @@ def mean(items):
     Calculates arithmetic mean. Returns zero for empty lists.
     """
     return float(sum(items)) / len(items) if len(items) > 0 else 0
+
+
+def start_end_date_by_weekday(items):
+    """
+    Groups start/end dates by weekday.
+    """
+    result = {
+        'start': [[], [], [], [], [], [], []],
+        'end': [[], [], [], [], [], [], []]
+    }
+
+    for single_date in items:
+        result['start'][single_date.weekday()].append(
+            seconds_since_midnight(items[single_date]['start'])
+        )
+        result['end'][single_date.weekday()].append(
+            seconds_since_midnight(items[single_date]['end'])
+        )
+
+    return result

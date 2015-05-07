@@ -2,3 +2,4 @@
 """
 Presence analyzer.
 """
+import presence_analyzer.views
