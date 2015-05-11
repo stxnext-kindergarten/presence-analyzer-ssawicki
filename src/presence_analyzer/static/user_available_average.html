@@ -32,7 +32,6 @@
             width: 750px;
             height: 750px;
         }
-
         #header ul {
             list-style: none;
             padding: 0;
@@ -76,7 +75,7 @@
     <script src="/static/js/jquery.min.js"></script>
     <script type="text/javascript" src="https://www.google.com/jsapi"></script>
     <script type="text/javascript">
-        google.load("visualization", "1", {packages:["corechart"], 'language': 'pl'});
+        google.load("visualization", "1", {packages:["timeline"], 'language': 'pl'});
     </script>
     <script type="text/javascript">
         function parseInterval(value) {
@@ -102,24 +101,22 @@
                     if (selected_user) {
                         loading.show();
                         chart_div.hide();
-                        $.getJSON("/api/v1/mean_time_weekday/"+selected_user, function(result) {
+                        $.getJSON("/api/v1/user_available_average/"+selected_user, function(result) {
                             $.each(result, function(index, value) {
-                                value[1] = parseInterval(value[1]);
+                                value[1] = new Date(value[1]);
+                                value[2] = new Date(value[2]);
                             });
                             var data = new google.visualization.DataTable();
                             data.addColumn('string', 'Weekday');
-                            data.addColumn('datetime', 'Mean time (h:m:s)');
+                            data.addColumn('datetime', 'Start time (h:m:s)');
+                            data.addColumn('datetime', 'End time (h:m:s)');
                             data.addRows(result);
                             var options = {
-                                hAxis: {title: 'Weekday'}
-                            },
-                                formatter = new google.visualization.DateFormat({pattern: 'HH:mm:ss'});
-                            formatter.format(data, 1);
-
-                            
+                                vAxis: {title: 'Weekday'}
+                            };
                             chart_div.show();
                             loading.hide();
-                            var chart = new google.visualization.ColumnChart(chart_div[0]);
+                            var chart = new google.visualization.Timeline(chart_div[0]);
                             chart.draw(data, options);
                         });
                     }
@@ -132,16 +129,16 @@
 <body>
     <div id="main">
         <div id="header">
-            <h1>Presence analyzer</h1>
+            <h1>Presence start end</h1>
             
             <ul>
                 <li><a href="/static/presence_weekday.html">Presence by weekday</a></li>
-                <li id="selected"><a href="/static/mean_time_weekday.html">Presence mean time</a></li>
-                <li><a href="/static/user_available_average.html">User available average</a></li>
+                <li><a href="/static/mean_time_weekday.html">Presence mean time</a></li>
+                <li id="selected"><a href="/static/user_available_average.html">User available average</a></li>
             </ul>
         </div>
         <div id="content">
-            <h2>Presence mean time by weekday</h2>
+            <h2>Presence start end</h2>
             <p>
                 <select id="user_id" style="display: none">
                     <option value="">--</option>
@@ -153,6 +150,5 @@
                 </div>
             </p>
         </div>
-
     </div>
 </body>

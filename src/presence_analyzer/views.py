@@ -7,7 +7,13 @@ import calendar
 from flask import redirect, abort
 
 from presence_analyzer.main import app
-from presence_analyzer.utils import jsonify, get_data, mean, group_by_weekday
+from presence_analyzer.utils import (
+    get_data,
+    group_by_weekday,
+    jsonify,
+    mean,
+    start_end_date_by_weekday
+)
 
 import logging
 log = logging.getLogger(__name__)  # pylint: disable=invalid-name
@@ -72,4 +78,29 @@ def presence_weekday_view(user_id):
     ]
 
     result.insert(0, ('Weekday', 'Presence (s)'))
+    return result
+
+
+@app.route('/api/v1/user_available_average/<int:user_id>', methods=['GET'])
+@jsonify
+def user_available_average_view(user_id):
+    """
+    Returns average start and end of available time for given user_id.
+    """
+    data = get_data()
+    if user_id not in data:
+        log.debug('User %s not found!', user_id)
+        abort(404)
+
+    start_end = start_end_date_by_weekday(data[user_id])
+
+    result = [
+        [
+            calendar.day_abbr[key],
+            mean(start_end['start'][key]) * 1000,
+            mean(start_end['end'][key]) * 1000
+        ]
+        for key in xrange(7)
+    ]
+
     return result

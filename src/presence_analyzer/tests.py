@@ -100,6 +100,28 @@ class PresenceAnalyzerViewsTestCase(unittest.TestCase):
             ]
         )
 
+    def test_user_available_average_view(self):
+        """
+        Test presence weekday view.
+        """
+        resp = self.client.get('/api/v1/user_available_average/0')
+        self.assertEqual(resp.status_code, 404)
+
+        resp = self.client.get('/api/v1/user_available_average/10')
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(
+            json.loads(resp.data),
+            [
+                ['Mon', 0, 0],
+                ['Tue', 34745000.0, 64792000.0],
+                ['Wed', 33592000.0, 58057000.0],
+                ['Thu', 38926000.0, 62631000.0],
+                ['Fri', 0, 0],
+                ['Sat', 0, 0],
+                ['Sun', 0, 0]
+            ]
+        )
+
 
 class PresenceAnalyzerUtilsTestCase(unittest.TestCase):
     """
@@ -206,6 +228,18 @@ class PresenceAnalyzerUtilsTestCase(unittest.TestCase):
         self.assertEqual(utils.mean([]), 0)
         self.assertEqual(utils.mean([1, 2]), 1.5)
         self.assertEqual(utils.mean([1.5, 2.8]), 2.15)
+
+    def test_start_end_date_by_weekday(self):
+        """
+        Test groups start/end dates by weekday.
+        """
+        self.assertEqual(
+            utils.start_end_date_by_weekday(utils.get_data()[10]),
+            {
+                'start': [[], [34745], [33592], [38926], [], [], []],
+                'end': [[], [64792], [58057], [62631], [], [], []]
+            }
+        )
 
 
 def suite():
